@@ -6,7 +6,16 @@ class Player:
 	def __init__(self, wallet):
 		self.wallet = wallet
 
-	def choose(self):
+	def want_to_quit(self):
+		"""Method adding if the user want to quit"""
+		answer = input('Voulez-vous vous retirer ? (y/n)')
+		return True if answer == 'y' else False
+
+class Croupier:
+	def __init__(self, purse):
+		self.purse = purse
+
+	def get_choice(self):
 		""" Request & Check, if the choice is in the range """
 		ok = False
 		while not ok:
@@ -17,24 +26,59 @@ class Player:
 				ok = True
 		return self.choice
 
-	def bet(self):
+	def get_bid_on(self):
 		""" Request & Check, if the bet is higher than the wallet"""
 		ok = False
 		while not ok:
 			self.bet = int(input("Saisissez la valeur de votre mise (ex.99): "))
-			if self.bet > self.wallet:
+			if self.bet > self.purse.wallet:
 				self.bet = print("La valeur de votre mise ne peut être plus grande que votre bourse.\n")
 			else:
 				ok = True
 		return self.bet
 
-	def want_to_quit(self):
-		answer = input('Voulez-vous vous retirer ? (y/n)')
-		return True if answer == 'y' else False
+	def winnings(self):
+		"""Method calculating 3 times the bet and returning the earnings"""
+		money = self.purse.wallet
+		self.bet = self.bet * 3
+		money += self.bet
+		print("""
+	Super !!!!
+	Mais où avez vous caché votre trèfle à quatres feuilles !!!!
+	Vous gagnez 3 fois votre mise.
+		
+		Gains : {} $         Portefeuille : {} $
+			""".format(self.bet, money))
+		return math.ceil(money)
+
+	def earnings(self):
+		"""Method calculating 50 % of the bet and returning the earnings"""
+		money = self.purse.wallet
+		self.bet = self.bet + (self.bet / 2)
+		money += self.bet
+		print("""
+	Pas mal!! Vous gagnez '50 %' de votre mise.
+		
+		Gains : {} $         Portefeuille : {} $
+			""".format(self.bet, money))
+		return math.ceil(money)
+
+	def losses(self):
+		"""Method calculating the losses"""
+		money = self.purse.wallet
+		money -= self.bet
+		print("""
+	Dommage... Vous perdez votre mise.
+	Retentez votre chance.
+		
+		Pertes : - {} $         Portefeuille : {} $
+			""".format(self.bet, money))
+		return math.ceil(money)
 
 class GameTray:
-	def __init__(self, player):
+	def __init__(self, player, croupier):
 		self.player = player
+		self.croupier = croupier
 
 	def get_rand_numb(self):
 		return random.randrange(50)
@@ -48,21 +92,15 @@ class GameTray:
 		# boucle de jeu
 		end = False
 		while not end:
-			money = self.player.wallet
-			choice = self.player.choose()
-			bid_on = self.player.bet()
+			choice = self.croupier.get_choice()
+			bid_on = self.croupier.get_bid_on()
 			returned_number = self.show_rand_numb()
 			if (returned_number == choice):
-				bid_on = bid_on * 3
-				money = money + bid_on
-				print("Super !!!!\nMise : + {} $    -    Bourse : {} $".format(bid_on, money))
+				self.croupier.winnings()
 			elif (returned_number % 2 == choice % 2 and returned_number % 1 == choice % 1):
-				bid_on = bid_on + (bid_on / 2)
-				money = money + bid_on
-				print("Pas Mal !!\nMise : + {} $    -    Bourse : {} $".format(bid_on, money))
+				self.croupier.earnings()
 			else:
-				money = money - bid_on
-				print("Dommage...\nMise : - {} $    -    Bourse : {} $".format(bid_on, money))
+				self.croupier.losses()
 			end = self.player.want_to_quit()
 
 
@@ -72,10 +110,11 @@ Bienvenue !!!
 Nous allons jouer à 'ZCASINO'.
 		
 C'est facile, vous choisissez un nombre entre '0 et 49' puis vous misez, et c'est parti !!!
-Pour éviter les excès(ex.1 000 000 $), nous avons limités votre bourse à '200 $'.
+Pour éviter les excès(ex.1 000 000 $), nous avons limités votre portefeuille à '200 $'.
 	""")
 	user = Player(200)
-	game = GameTray(user)
+	manager = Croupier(user)
+	game = GameTray(user, manager)
 	game.start()
 
 
